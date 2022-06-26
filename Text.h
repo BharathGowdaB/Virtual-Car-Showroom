@@ -43,6 +43,7 @@ class Text {
 			height = h;
 			pos[0] = p1;
 			pos[1] = p2;
+			textAlign = TEXT_LEFT;
 			textstyle = GLUT_BITMAP_HELVETICA_18;
 			textHei = 18;
 			borderType = LINE;
@@ -227,8 +228,9 @@ class Button : public Text {
 				if(dx <= width && dy <= height){
 					if(callback != NULL){
 						callback();
-						return true;
+						
 					}
+					return true;
 				}
 			}
 			return false;

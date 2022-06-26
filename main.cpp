@@ -5,8 +5,10 @@
 #include "Extras.h"
 #include "main.h"
 #include "customer.h"
+#include "admin.h"
 
 void menuDisplay(){
+	glClearColor(1,1,1,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
 		glMatrixMode(GL_PROJECTION);
@@ -23,11 +25,9 @@ void menuDisplay(){
 
 
 void menuReshape(int w,int h){
-done = 0;
+	done = 0;
 	winHeight = h/2;
 	winWidth = w/2;
-	//printf("%d ,%d",w,h);
-			
 }
 
 
@@ -36,16 +36,21 @@ void menuMouse(int key,int state,int x,int y){
 	y -= winHeight;
 	y *= -1;
 	printf("%d,%d\n",x,y);
-	if(key == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
+	if(key == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 		button[0].onClick(x,y);
+		button[1].onClick(x,y);
+		if(button[2].onClick(x,y)){
+			exit(0);
+		}
 		editText[0].onSelect(x,y,func);
 	}
 }
 
+void Exit(){
+	exit(0);
+}
 
 void menuInit(){
-	glClearColor(1,1,1,0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	glViewport(0,0,winWidth * 2,winHeight * 2);
 		glMatrixMode(GL_PROJECTION);
@@ -68,6 +73,7 @@ void menuInit(){
 	button[1].setColor(1,1,1);
 	button[1].setTextStyle(GLUT_BITMAP_HELVETICA_18,18);
 	button[1].setBackground(0.2,0.2,0.8);
+	button[1].setOnClick(renderAdmin);
 	bCount++;
 	
 	button[2].init(-70,0,"Exit",140);
@@ -75,6 +81,7 @@ void menuInit(){
 	button[2].setColor(1,1,1);
 	button[2].setTextStyle(GLUT_BITMAP_HELVETICA_18,18);
 	button[2].setBackground(0.2,0.2,0.8);
+	//button[2].setOnClick(Exit);
 	bCount++;
 	
 	text[0].init(-200,170,"3D SHOWROOM",400);
@@ -83,6 +90,10 @@ void menuInit(){
 	text[0].setTextStyle(GLUT_BITMAP_TIMES_ROMAN_24,24);
 	text[0].setPadding(20,20);
 	tCount++;
+	
+	glutDisplayFunc(menuDisplay);
+	glutReshapeFunc(menuReshape);
+	glutMouseFunc(menuMouse);
 	
 }
 int main(int argc,char **argv)
@@ -95,9 +106,7 @@ int main(int argc,char **argv)
 	mainWin = glutCreateWindow("MENU");
 	
 	menuInit();
-	glutDisplayFunc(menuDisplay);
-	glutReshapeFunc(menuReshape);
-	glutMouseFunc(menuMouse);
+	
 	
 	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();

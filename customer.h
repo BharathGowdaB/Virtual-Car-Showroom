@@ -1,6 +1,12 @@
 
 void customerUserContact();
+void customerMotionFunc(int,int);
+
 static void (*func)() = customerUserContact;
+static scrollBarX userScr;
+static scrollBarY carScrY;
+static bool userScroll =false ,carScrollY = false;
+static int oldX,oldY;
 
 void customerCarModel(){
 	glPushMatrix();
@@ -40,9 +46,14 @@ void customerUserContact(){
 		glMatrixMode(GL_PROJECTION);
 			glLoadIdentity();
 			glViewport(viewport[0].x0,viewport[0].y0,viewport[0].x1,viewport[0].y1);
-			gluOrtho2D(viewport[0].orthox0,viewport[0].orthoy0,viewport[0].orthox1,viewport[0].orthoy1);
+			gluOrtho2D(viewport[0].orthox0 + userScr.scroll,viewport[0].orthoy0+userScr.scroll,viewport[0].orthox1,viewport[0].orthoy1);
 		glMatrixMode(GL_MODELVIEW);
-		
+			
+			userScr.posx = userScr.scroll;
+			userScr.draw();
+			text[4].pos[0] = userScr.scroll;
+			button[1].pos[0] = userScr.scroll;
+			button[2].pos[0] = userScr.scroll  + 130;
 			text[4].width = viewport[0].x1;
 			if(button[1].isSelected){
 				button[1].setColor(0,0,0);
@@ -82,16 +93,62 @@ void customerCarSpec(){
 	glPopMatrix();
 	glFlush();
 	
+	
 	glPushMatrix();
 		glMatrixMode(GL_PROJECTION);
 			glLoadIdentity();
 			glViewport(viewport[1].x0,viewport[1].y0,viewport[1].x1,viewport[1].y1);
-			gluOrtho2D(viewport[1].orthox0,viewport[1].orthoy0,viewport[1].orthox1,viewport[1].orthoy1);
+			gluOrtho2D(viewport[1].orthox0,viewport[1].orthoy0,viewport[1].orthox1 + carScrY.scroll,viewport[1].orthoy1+ carScrY.scroll);
 		glMatrixMode(GL_MODELVIEW);
-			curCar.draw(viewport[1].x1,viewport[1].y1,(viewport[1].x1)/(winWidth*0.5),10,-10);
+			text[10].pos[1] = carScrY.scroll - 30;
+			text[9].pos[1] = carScrY.scroll - 30;
+			text[10].drawText();
+			text[10].drawBox();
+			text[9].drawBox();
+			carScrY.draw();
+			curCar.draw(viewport[1].x1,viewport[1].y1,(viewport[1].x1)/(350),10,-10);
+			
 	glPopMatrix();
-	
 	glutSwapBuffers();
+}
+
+void customerMotionFunc(int x,int y){
+	if(userScroll){
+		userScr.x += (x - oldX) ;
+		
+		oldX = x;
+		if(userScr.x > userScr.xmin ){
+			userScr.x = userScr.xmin;
+		}
+		if(userScr.x < 0){
+			userScr.x = 0;
+		}
+		userScr.scroll = userScr.x * userScr.ratio;
+		customerUserContact();
+		
+	}
+	if(carScrollY){
+		
+		if(oldX < carScrY.posx)
+			carScrY.y += y - oldY ;
+		else if(-oldY > (carScrY.posy + carScrY.ymax + carScrY.y) && -oldY < (carScrY.posy + carScrY.y)){
+			carScrY.y -= y - oldY;
+		}
+		else
+			carScrollY = false;
+			
+		oldY = y;
+		if(carScrY.y < carScrY.ymin){
+			carScrY.y =  carScrY.ymin;
+		}
+		if(carScrY.y > 0){
+			carScrY.y = 0;
+		}
+		
+		carScrY.scroll = carScrY.y * carScrY.ratio;
+		customerCarSpec();
+	}
+	
 }
 
 void selectButton1(){
@@ -125,10 +182,9 @@ void customerDisplay(){
 }
 
 void customerFormSubmit(){
-	//printf("submit called\n");
 	FILE *fp = fopen("customerDetail.txt","a+");
 	
-	fprintf(fp,"Name:%s,Phone:%s,Email:%s\n",editText[0].name,editText[1].name,editText[2].name);
+	fprintf(fp,"#NAME:%s #PHONE:%s #EMAIL:%s #MODEL:%s #BRAND:%s \n",editText[0].name,editText[1].name,editText[2].name,curCar.model,curCar.brand);
 	fclose(fp);
 	editText[0].setValue("");
 	editText[1].setValue("");
@@ -143,7 +199,10 @@ void customerFormSubmit(){
 void customerMenufunc(int n){
 	
 	switch(n){
-		case 4 : exit(0);
+	
+		case 4 : menuInit();
+			glutPostRedisplay();
+			break;
 	}
 }
 
@@ -152,6 +211,7 @@ void initCustomer(int x,int y){
 	float xt = winWidth * 2.0;
 	float yt = 190;
 	
+	//bool flag = false;
 	if(1221 +180< xt){
 		yt = 160;
 		button[0].pos[0] = 1221 + 60;
@@ -164,16 +224,38 @@ void initCustomer(int x,int y){
 	
 	//user-contact-viewport
 	setViewport(&viewport[0],0,0,xt,yt,0,xt,-yt,0);
+	if(xt < 1221){
+		viewport[0].y1 += 20;
+		viewport[0].orthox1 -= 20;
+		userScr.init(&viewport[0],1240,0,-yt-20,20);
+		glutMotionFunc(customerMotionFunc);	
+	}
+	else{
+		userScr.scroll = 0;
+		userScr.isEnabled = false;
+		glutMotionFunc(NULL);
+	}
 	
 	//car-detail-viewport
-	xt = winWidth * 0.5;
+	xt = 350;
 	yt = winHeight*2.0 - viewport[0].y1;
 	setViewport(&viewport[1],0,viewport[0].y1,xt,yt,0,xt,-yt,0);	
 	
+	if(642  > viewport[1].y1){
+		carScrY.init(&viewport[1],-642,340,-30,20);
+		glutMotionFunc(customerMotionFunc);
+	}
+	else{
+		carScrY.isEnabled = false;
+		carScrY.scroll = 0;
+		glutMotionFunc(NULL);
+	}
+	
 	//car-view-viewport
-	xt = winWidth * 1.5;
+	xt = winWidth * 2.0 - 350;
 	yt = winHeight * 2.0 - viewport[0].y1;
-	setViewport(&viewport[2],viewport[1].x1,viewport[0].y1,xt,yt,0,xt,-yt,0,-10,10);	
+	setViewport(&viewport[2],viewport[1].x1,viewport[0].y1,xt,yt,0,xt,-yt,0,-10,10);
+	
 }
 
 void reshapeCustomer(int w,int h){
@@ -184,27 +266,52 @@ void reshapeCustomer(int w,int h){
 
 
 void mouseCustomer(int key,int state,int x,int y){
+	
+	//Viewport[0] : user-contact mouse operations
 	int yt = (winHeight * 2 - viewport[0].y1) - y ;
+	int xt = x + userScr.scroll;
 	if(key == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 		for(int i=eStart ; i<eCount;i++){
-			if(editText[i].onSelect(x,yt,func)) break;
+			if(editText[i].onSelect(xt,yt,func)) break;
 		}
 		for(int i=bStart ; i<bCount;i++){
-			if(button[i].onClick(x,yt))break;
+			if(button[i].onClick(xt,yt))break;
 		}
 	}
 	
-	yt = winHeight * 2.0 - y;
-
-	if(x > viewport[2].x0 && yt > viewport[2].y0){
-		printf("Menu attached\n");
-		glutAttachMenu(GLUT_RIGHT_BUTTON);			
+	//User-Content-Scroll bar
+	if(key == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
+		if(x < userScr.xmax + userScr.x && x > userScr.x && yt < 0){
+			userScroll = true;
+			oldX = x;
+		}
 	}
-	else{
-		printf("Menu deattached\n");
-		glutDetachMenu(GLUT_RIGHT_BUTTON);
-	}	
+	
+	
+	yt = -y;
+	
+	if(key == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
+		if(y < viewport[1].y1 && x < viewport[1].x1){
+			printf("Scrolling start\n");
+			carScrollY = true;
+			oldY = y;
+			oldX = x;
+		}
+		
+	}
+	
+	//viewport[1] : Car Spec mouse operations
+	yt = winHeight * 2.0 - y;
+	
+	
+	//stop scrolling
+	if(key == GLUT_LEFT_BUTTON && state == GLUT_UP){
+		userScroll = false;
+		printf("Scrolling end\n");
+		carScrollY =false;
+	}
 }
+
 
 void renderCustomer(){
 	glClearColor(1,1,1,1);
@@ -288,6 +395,17 @@ void renderCustomer(){
 	text[4].setBackground(COLOR_TASKBAR);
 	tCount++;
 	
+	text[10].init(0,-32,"Info",130,28);
+	text[10].setPadding(0,10);
+	text[10].setTextStyle(TEXT_CENTER,GLUT_BITMAP_HELVETICA_18,18);
+	text[10].height = 26;
+	text[10].setBackground(1,1,1);
+	text[10].setColor(COLOR_TASKBAR);
+	text[10].borderType = NO_BORDER;
+			
+	text[9].init(0,-30,"",1000,30);
+	text[9].setBackground(COLOR_TASKBAR);
+	
 	//set current car
 	curCar.getData("CAR001.dtl");
 	
@@ -297,8 +415,8 @@ void renderCustomer(){
 	glutAddMenuEntry("Next",1);
 	glutAddMenuEntry("Previous",2);
 	glutAddMenuEntry("Animate",3);
-	glutAddMenuEntry("Exit",4);
-	//glutAttachMenu(GLUT_RIGHT_BUTTON);
+	glutAddMenuEntry("Back",4);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
 	
 	glutMouseFunc(mouseCustomer);
 	glutKeyboardFunc(NULL);
