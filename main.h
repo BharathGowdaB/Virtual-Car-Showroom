@@ -1,13 +1,13 @@
 
 static float winHeight = 0,winWidth = 0;
 
-static Text text[10];
+static Text text[11];
 static int tCount = 0,tStart = 0;
 
 static Button button[11] ;
 static int bCount = 0,bStart = 0;
 
-static EditText editText[10];
+static EditText editText[11];
 static int eCount = 0,eStart = 0;
 
 static carDetail curCar;
@@ -18,7 +18,8 @@ int done =0;
 
 static int mainWin ,subWin;
 
-
+//Initialization functions
+void menuInit();
 
 void renderAllText(){
 	for(int i=0; i < bCount ;i++){

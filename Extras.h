@@ -1,11 +1,133 @@
-
 const char alpha[] = "qwertyuiopasdfghjklzxcvbnm";
+
+class scrollBarX{
+	public : struct Viewport *vp;
+		float x,scroll,xmin,xmax,ratio;
+		float posx,posy;
+	        
+		int scrollWidth = 10;
+		bool isEnabled = false;
+		
+		void init(Viewport *viewport,int maxWidth,float xp,float yp,int sWidth = 10){
+			isEnabled = true;
+			vp = viewport;
+			x = 0;
+			scroll = 0;
+			xmax = vp->x1 * vp->x1 / maxWidth;
+			xmin = vp->x1 - xmax;
+			ratio = (maxWidth - vp->x1)/xmin;
+			posx = xp;
+			posy = yp;
+			scrollWidth = sWidth;
+		}
+		
+		void draw(){
+			if(isEnabled){
+			
+			glPushMatrix();
+				glBegin(GL_LINE_LOOP);
+					glColor3f(0,0,0);
+					glVertex2f(posx+x+scroll+5,posy-2);
+					glVertex2f(posx+x+scroll+5,posy+scrollWidth+2);
+					glVertex2f(posx+xmax-5 +scroll+ x,posy+scrollWidth+2);
+					glVertex2f(posx+xmax-5 + scroll+x,posy);
+				glEnd();
+			
+				glBegin(GL_POLYGON);
+					glColor3f(.5,.5,.5);
+					glVertex2f(posx+x+scroll+5,posy-2);
+					glVertex2f(posx+x+scroll+5,posy+scrollWidth+2);
+					glVertex2f(posx+xmax-5 +scroll+ x,posy+scrollWidth+2);
+					glVertex2f(posx+xmax-5 + scroll+x,posy);
+				glEnd();
+				glBegin(GL_LINE_LOOP);
+					glColor3f(0,0,0);
+					glVertex2f(posx,posy);
+					glVertex2f(posx,posy+scrollWidth);
+					glVertex2f(posx + vp->x1 ,posy+scrollWidth);
+					glVertex2f(posx + vp->x1 ,posy);
+				glEnd();
+				glBegin(GL_POLYGON);
+					glColor3f(COLOR_LIGHT_GREY);
+					glVertex2f(posx,posy);
+					glVertex2f(posx,posy+scrollWidth);
+					glVertex2f(posx + vp->x1 ,posy+scrollWidth);
+					glVertex2f(posx + vp->x1 ,posy);
+				glEnd();
+				
+			glPopMatrix();
+			}
+		}
+};
+
+class scrollBarY{
+	public : struct Viewport *vp;
+		float y,scroll,ymin,ymax,ratio;
+		float posx,posy;
+	        
+		int scrollWidth = 10;
+		bool isEnabled = false;
+		
+		void init(Viewport *viewport,int maxHeight,float xp,float yp,int sWidth = 10){
+			isEnabled = true;
+			vp = viewport;
+			y = 0;
+			scroll = 0;
+			ymax = (vp->y1 + yp )* (vp->y1 + yp) / maxHeight;
+			ymin = vp->y1 + yp + ymax;
+			ymin *= -1.0;
+			ratio = (maxHeight + vp->y1)/ymin;
+			posx = xp;
+			posy = yp;
+			scrollWidth = sWidth;
+		}
+		
+		void draw(){
+			if(isEnabled){
+			
+			glPushMatrix();
+				glBegin(GL_LINE_LOOP);
+					glColor3f(0,0,0);
+					glVertex2f(posx - 2 ,posy +  scroll+ y- 5);
+					glVertex2f(posx - 2,posy + ( scroll + ymax + y - 5));
+					glVertex2f(posx+scrollWidth+2,posy + ( scroll + ymax + y - 5));
+					glVertex2f(posx+scrollWidth+2,posy +  scroll+ y - 5);
+				glEnd();
+			
+				glBegin(GL_POLYGON);
+					glColor3f(.5,.5,.5);
+					glVertex2f(posx - 2 ,posy +  scroll + y- 5);
+					glVertex2f(posx - 2,posy + ( scroll + ymax + y - 5));
+					glVertex2f(posx+scrollWidth+2,posy + ( scroll + ymax + y - 5));
+					glVertex2f(posx+scrollWidth+2,posy +  scroll+ y - 5);
+				glEnd();
+				glBegin(GL_LINE_LOOP);
+					glColor3f(0,0,0);
+					glVertex2f(posx,posy);
+					glVertex2f(posx,-vp->y1 + scroll);
+					glVertex2f(posx + scrollWidth ,-vp->y1 + scroll);
+					glVertex2f(posx + scrollWidth ,posy);
+				glEnd();
+				glBegin(GL_POLYGON);
+					glColor3f(COLOR_LIGHT_GREY);
+					glVertex2f(posx,posy);
+					glVertex2f(posx,-vp->y1 + scroll);
+					glVertex2f(posx + scrollWidth ,-vp->y1 + scroll);
+					glVertex2f(posx + scrollWidth ,posy);
+				glEnd();
+				
+			glPopMatrix();
+			}
+		}
+};
+
+
 
 class carDetail {
 	public :
-		char model[10],brand[50];
+		char model[20],brand[40];
 		char price[30];
-		char engineSpec[20];
+		char engineSpec[40];
 		char fuelType[10];
 		float mileage ;
 		short autoGear;
@@ -18,7 +140,7 @@ class carDetail {
 			
 		}
 		
-		bool draw(int x,int y,float ratio,int initPadx=0,int initPady=0){
+		float draw(int x,int y,float ratio,int initPadx=0,int initPady=0){
 			int curHei = 0;
 			Text drawer;
 			const char *p[14] = { "Model : ",model,"Brand : ",brand,"Price : ",price,"Engine : ",engineSpec,"Gear Type : "};
@@ -33,23 +155,8 @@ class carDetail {
 			
 			int padx = 5,pady = 2;
 			
-			
-			drawer.init(0,-32,"Info",130,28);
-			drawer.setPadding(0,10);
-			drawer.setTextStyle(TEXT_CENTER,GLUT_BITMAP_HELVETICA_18,18);
-			drawer.height = 26;
-			drawer.setBackground(1,1,1);
-			drawer.setColor(COLOR_TASKBAR);
-			drawer.borderType = NO_BORDER;
-			drawer.drawText();
-			drawer.drawBox();
-			
-			drawer.init(0,-30,"",x+2,30);
-			drawer.setBackground(COLOR_TASKBAR);
-			drawer.drawBox();
-			
 			initPady = -30;
-			x -= +initPadx*2;
+			x -= initPadx*2;
 
 			drawer.init(initPadx,initPady,"");
 			drawer.borderType = NO_BORDER;
@@ -68,23 +175,18 @@ class carDetail {
 				drawer.setTextStyle(TEXT_RIGHT,GLUT_BITMAP_HELVETICA_18,18,ratio);
 				drawer.pos[1] -= drawer.height + pady;
 				drawer.drawText();
-				drawer.setBackground(218/255.0, 223/255.0, 232/255.0);
+				drawer.setBackground(COLOR_LIGHT_GREY);
 				drawer.borderType = NO_BORDER;
 				drawer.drawBox();
 				
 				drawer.pos[1] -= 6;
 	
 			}
-			
 			ratingStars(drawer.pos[0]+ x - 240,drawer.pos[1]+10,x/(float)y,safetyRate);
-			
-			if(drawer.pos[1] + 6 > y*-1 )
-				return false;
-			return true; // scroll required
+			return (-1.0 * drawer.pos[1] + 10) ;
 		}
 		
 		void ratingStars(float posx,float posy,float aspect,int rate = 0){
-			
 			for(int i = 0 ; i < 5 ; i++){
 				posx += 40;
 			glPushMatrix();
@@ -133,10 +235,6 @@ class carDetail {
 				glEnd();
 				glFlush();
 			glPopMatrix();
-			}
-			
-		}
-		
-		
-		
+			}			
+		}		
 };
