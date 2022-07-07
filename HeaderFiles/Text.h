@@ -306,7 +306,6 @@ class EditText : public Text{
 			
 			if(dx < 0 || dy < 0) return false;
 			if(dx <= width && dy <= height){
-				//printf("%d, %d\n",x,y);
 				if(curEditText != NULL)
 					curEditText->setBorderColor(0,0,0);
 				curEditText = this;

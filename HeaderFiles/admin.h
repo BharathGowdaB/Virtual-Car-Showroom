@@ -95,7 +95,6 @@ void adminDisplay(){
 	scrollY.draw();
 	
 	customerNode *cur = head.next;
-	//cur = cur->next;
 	bool odd = true;
 	while(cur != NULL){
 		text[0].setValue(cur->name);
@@ -141,7 +140,6 @@ void mouseAdmin(int key,int state,int x,int y){
 		y -= scrollY.scroll;
 		
 		int ch = y/50 - 1;
-		//printf("ch = %d , y = %d,cunt= %d \n",ch,y,custCount);
 		if(ch < custCount && ch >= 0){
 		customerNode *cur = head.next,*prev = &head;
 		for(int i=0 ;i <ch ; i++){
@@ -235,8 +233,8 @@ void adminMenuFunc(int n){
 			glutPostRedisplay();
 			break;
 			
-		case 1 : { customerNode *cur = &head;
-			FILE *fp = fopen("customerDetail.txt","w");
+		case 1 : { customerNode *cur = head.next;
+			FILE *fp = fopen(FILE_CUSTOMER_INFO,"w");
 			while(cur != NULL){
 				fprintf(fp,"#NAME:%s#PHONE:%s#EMAIL:%s#MODEL:%s#BRAND:%s\n", cur->name,cur->phone,cur->email,cur->model,cur->brand);
 				cur = cur->next;

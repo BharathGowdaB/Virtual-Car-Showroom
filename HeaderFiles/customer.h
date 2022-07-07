@@ -6,18 +6,22 @@ void customerMotionFunc(int,int);
 static void (*func)() = customerUserContact;
 static scrollBarX userScr;
 static scrollBarY carScrY;
-static bool userScroll =false ,carScrollY = false,grabCar = false;
+static bool userScroll =false ,carScrollY = false,grabCar = false ,zoomCar = false;
 static int oldX,oldY;
-static float modelTranslateY = 0,modelTranslateX = 0;
+static float modelTranslateY = -2,modelTranslateX = 0, zoom = 1.5;
 
 static char carlist[10][150];
 static int carCount = 0,currentCarIndex = 0;
-static float theta = 0;
+static float theta = 0, wheelTheta = 0.0;
 
 
-GLfloat light_intensity[]= {1,1,1,1.0};
-GLfloat light_position[]={2.0,5.0,3.0,0.0};
+class lightObject{
+	public : GLenum light;
+	bool isEnabled = false;
+};
 
+lightObject lights[10];
+static int  lightCount = 0;
 
 void customerCarModel(){
 	glPushMatrix();
@@ -34,27 +38,33 @@ void customerCarModel(){
 		glMatrixMode(GL_PROJECTION);
 			glLoadIdentity();
 			glViewport(viewport[2].x0,viewport[2].y0,viewport[2].x1,viewport[2].y1);
-			//printf("%f %f %f",(GLfloat)viewport[2].x1/(GLfloat)viewport[2].y1 , viewport[2].x1,viewport[2].y1);
 			if(viewport[2].x1 > viewport[2].y1)
 				glOrtho(-3.0 * (GLfloat)viewport[2].x1/(GLfloat)viewport[2].y1 ,3.0 * (GLfloat)viewport[2].x1/(GLfloat)viewport[2].y1 ,-3,3,-10,10);
 			else 
 				glOrtho(-3,3,-3.0 * (GLfloat)viewport[2].y1/(GLfloat)viewport[2].x1 , 3.0 * (GLfloat)viewport[2].y1/ (GLfloat) viewport[2].x1  ,-10,10);
-			//glOrtho(-6,6,-4,4,-4,4);
 		glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
-			gluLookAt(2.0,1.0,2.0,0.0,0.2,0.2,0.0,1.0,0.0);
+			gluLookAt(2.0,0.70,2.0,0.0,0.2,0.2,0.0,1.0,0.0);
+			text[8].init(20,-50,curCar.brand);
+			text[8].setColor(1,1,1);
+			text[8].drawText();
 			glEnable(GL_LIGHTING);
-			glEnable(GL_LIGHT0);
+			for(int i = 0 ; i < lightCount ; i++)
+				if(lights[i].isEnabled)
+					glEnable(lights[i].light);
 			glPushMatrix();
 				glTranslatef(0,-2,0);
 				glScalef(8,0.1,8);
 				glutSolidCube(1);
 			glPopMatrix();
 			glTranslatef(0, modelTranslateY,0);
+			glScalef(zoom,zoom,zoom);
 			glRotatef(theta,0,1,0);
 				drawModel();
+			
+			for(int i = 0 ; i < lightCount ; i++)
+				glDisable(lights[i].light);
 			glDisable(GL_LIGHTING);
-			glDisable(GL_LIGHT0);
 	glPopMatrix();
 	
 	glutSwapBuffers();
@@ -82,31 +92,10 @@ void customerUserContact(){
 			userScr.draw();
 			text[4].pos[0] = userScr.scroll;
 			button[1].pos[0] = userScr.scroll;
-			button[2].pos[0] = userScr.scroll  + 130;
 			text[4].width = viewport[0].x1;
-			if(button[1].isSelected){
-				button[1].setColor(0,0,0);
-				button[1].setBackground(1,1,1);
-
-				button[2].setColor(1,1,1);
-				button[2].setBackground(COLOR_TASKBAR);
-				
-				renderAllText();	
-			}
-			else{
-				button[1].setColor(1,1,1);
-				button[1].setBackground(COLOR_TASKBAR);
-			
-				button[2].setColor(0,0,0);
-				button[2].setBackground(1,1,1);
-				
-				for(int i=1 ;i < 3 ;i++){
-					button[i].drawText();
-					button[i].drawBox();
-				}
-				text[4].drawBox();
-				
-			}			
+			renderAllText();	
+			text[4].drawBox();
+						
 	glPopMatrix();
 	glutSwapBuffers();
 }
@@ -181,27 +170,24 @@ void customerMotionFunc(int x,int y){
 	if(grabCar){
 		modelTranslateY -= (6.0 * viewport[2].aspecty/(float)viewport[2].y1) * (y - oldY);
 		modelTranslateX += (6.0 * viewport[2].aspectx/(float)viewport[2].x1) * (x - oldX);
- 		//printf("translate  %f" , modelTranslateY);
 		oldY = y; oldX = x;
-		customerCarModel();
+		if(modelTranslateY < -2)
+			modelTranslateY = -2;
+		else if(modelTranslateY > 1.5)
+			modelTranslateY = 1.5;
+		glutPostRedisplay();
+	}
+	if(zoomCar){
+		printf("new zoom = %f \n", zoom + (oldY - y) * 0.001);
+		zoom += (oldY-y) * 0.1;
+		if(zoom < 0.8)
+			zoom = 0.8;
+		else if(zoom > 2.5)
+			zoom = 2.5;
+		oldY = y;
+		glutPostRedisplay();
 	}
 	
-}
-
-void selectButton1(){
-	button[1].isSelected = true;
-	button[2].isSelected = false;
-	bStart = 0;
-	eStart = 0;
-	customerUserContact();
-}
-
-void selectButton2(){
-	button[2].isSelected = true;
-	button[1].isSelected = false;
-	bStart = 1;
-	eStart = 4;
-	customerUserContact();
 }
 
 void customerDisplay(){
@@ -234,14 +220,16 @@ void customerFormSubmit(){
 }
 
 void idle(){
-	theta += 0.2;
+	theta += 0.35;
 	theta = theta > 360.0 ? theta -360.0 : theta;
+	
 	customerCarModel();
 }
+
 void customerMenuFunc(int n){
 	
 	switch(n){
-		case 0 :	currentCarIndex+=2;
+		case 1 :	currentCarIndex+=2;
 				if(currentCarIndex >= carCount) currentCarIndex -= carCount;
 				curCar.getData(carlist[currentCarIndex ]);
 				parseMaterial(carlist[(currentCarIndex)+1]);
@@ -249,8 +237,9 @@ void customerMenuFunc(int n){
 				glutPostRedisplay();
 			break;
 
-		case 1 :	currentCarIndex -= 2;
+		case 2 :	currentCarIndex -= 2;
 				if(currentCarIndex < 0) currentCarIndex += carCount;
+				printf(" Car Count = %d , index %d\n" ,carCount,currentCarIndex);
 				curCar.getData(carlist[currentCarIndex]);
 				parseMaterial(carlist[(currentCarIndex)+1]);
 				parseObject(carlist[(currentCarIndex)]);
@@ -258,7 +247,8 @@ void customerMenuFunc(int n){
 			break;
 		
 
-		case 4 : menuInit();
+		case 3 : menuInit();
+			glutIdleFunc(NULL);
 			glutPostRedisplay();
 			break;
 	}
@@ -269,18 +259,17 @@ void customerAnimateFunc(int n){
 	switch(n){
 		case 1 : glutIdleFunc(idle);
 				break;
-		case 3 : glutIdleFunc(NULL);
+		case 2 : glutIdleFunc(NULL);
 				break;
 	}
 }
 
 void initCustomer(int x,int y){
 	float xt = winWidth * 2.0;
-	float yt = 190;
+	float yt = 190 > winHeight * 0.5 ? 190 : winHeight * 0.5;
 	
-	//bool flag = false;
 	if(1221 +180< xt){
-		yt = 160;
+		yt -= 30;
 		button[0].pos[0] = 1221 + 60;
 		button[0].pos[1] = -128;
 	}
@@ -295,12 +284,10 @@ void initCustomer(int x,int y){
 		viewport[0].y1 += 20;
 		viewport[0].orthox1 -= 20;
 		userScr.init(&viewport[0],1240,0,-yt-20,20);
-		//glutMotionFunc(customerMotionFunc);	
 	}
 	else{
 		userScr.scroll = 0;
 		userScr.isEnabled = false;
-		//glutMotionFunc(NULL);
 	}
 	
 	//car-detail-viewport
@@ -308,14 +295,12 @@ void initCustomer(int x,int y){
 	yt = winHeight*2.0 - viewport[0].y1;
 	setViewport(&viewport[1],0,viewport[0].y1,xt,yt,0,xt,-yt,0);	
 	
-	if(642  > viewport[1].y1){
-		carScrY.init(&viewport[1],-642,340,-30,20);
-		//glutMotionFunc(customerMotionFunc);
+	if(CAR_SPEC_LEN  > viewport[1].y1){
+		carScrY.init(&viewport[1],-CAR_SPEC_LEN,340,-30,20);
 	}
 	else{
 		carScrY.isEnabled = false;
 		carScrY.scroll = 0;
-		//glutMotionFunc(NULL);
 	}
 	
 	//car-view-viewport
@@ -338,11 +323,16 @@ void mouseCustomer(int key,int state,int x,int y){
 	if(key == GLUT_LEFT_BUTTON && state == GLUT_UP){
 		grabCar = false;
 		userScroll = false;
-		//printf("Scrolling end\n");
 		carScrollY =false;
-		//glutMotionFunc(NULL);
 	}
-
+	
+	if(key == GLUT_MIDDLE_BUTTON && state == GLUT_UP){
+		zoomCar = false;
+	}
+	else if(key == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN){
+		zoomCar = true;
+		oldY = y;
+	}
 	//Viewport[0] : user-contact mouse operations
 	int yt = (winHeight * 2 - viewport[0].y1) - y ;
 	int xt = x + userScr.scroll;
@@ -350,9 +340,8 @@ void mouseCustomer(int key,int state,int x,int y){
 		for(int i=eStart ; i<eCount;i++){
 			if(editText[i].onSelect(xt,yt,func)) break;
 		}
-		for(int i=bStart ; i<bCount;i++){
-			if(button[i].onClick(xt,yt))break;
-		}
+		
+		button[0].onClick(xt,yt);
 	}
 	
 	//User-Content-Scroll bar
@@ -368,7 +357,6 @@ void mouseCustomer(int key,int state,int x,int y){
 	
 	if(key == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 		if(y < viewport[1].y1 && x < viewport[1].x1){
-			//printf("Scrolling start\n");
 			carScrollY = true;
 			oldY = y;
 			oldX = x;
@@ -379,7 +367,6 @@ void mouseCustomer(int key,int state,int x,int y){
 	//viewport[2] : Car Model mouse operations
 	yt = winHeight * 2.0 - y;
 	
-	//printf("%d, %d ,%f, %f\n" , x ,yt,viewport[2].x0,viewport[2].y0);
 	if(key == GLUT_LEFT_BUTTON && state == GLUT_DOWN && x > viewport[2].x0 && yt > viewport[2].y0){
 		grabCar = true;
 		oldY = y; oldX = x;
@@ -387,6 +374,15 @@ void mouseCustomer(int key,int state,int x,int y){
 	}
 	
 
+}
+
+void enableLight(int n)
+{
+	if(lights[n].isEnabled)
+		lights[n].isEnabled = false;
+	else
+		lights[n].isEnabled = true;
+	customerCarModel();
 }
 
 
@@ -454,18 +450,11 @@ void renderCustomer(){
 	button[1].height = 28;
 	button[1].setTextStyle(TEXT_CENTER, GLUT_BITMAP_HELVETICA_18, 10,1);
 	button[1].borderType = NO_BORDER;
+	button[1].setColor(1,1,1);
+	button[1].setBackground(COLOR_TASKBAR);
 	button[1].isSelected  = true;
-	button[1].setOnClick(selectButton1);
-	bCount++;
-	
-	button[2].init(130,-31," Accessories ",130,26);
-	button[2].setPadding(0,0);
-	button[2].height = 28;
-	button[2].setTextStyle(TEXT_CENTER, GLUT_BITMAP_HELVETICA_18, 10,1);
-	button[2].borderType = NO_BORDER;
-	button[2].setOnClick(selectButton2);
-	bCount++;
-			
+	bCount++;	
+		
 	initCustomer(winWidth * 2,winHeight * 0.5);
 	
 	text[4].init(0,-30,"",viewport[0].x1,30);
@@ -477,45 +466,85 @@ void renderCustomer(){
 	text[10].setPadding(0,10);
 	text[10].setTextStyle(TEXT_CENTER,GLUT_BITMAP_HELVETICA_18,18);
 	text[10].height = 26;
-	text[10].setBackground(1,1,1);
-	text[10].setColor(COLOR_TASKBAR);
+	text[10].setColor(1,1,1);
+	text[10].setBackground(COLOR_TASKBAR);
 	text[10].borderType = NO_BORDER;
 			
 	text[9].init(0,-30,"",1000,30);
 	text[9].setBackground(COLOR_TASKBAR);
+	
 }
 	//set current car
 	printf("carcount = %d",carCount);
-	//char const *buf = carlist[currentCarIndex % carCount];
 	currentCarIndex = 0;
 	curCar.getData(carlist[currentCarIndex]);
+	
 	parseMaterial(carlist[(currentCarIndex)+1]);
 	parseObject(carlist[(currentCarIndex)]);
 
-	glShadeModel(GL_SMOOTH);
+	glShadeModel(GL_FLAT);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_NORMALIZE);
 	
+	GLfloat light_intensity[]= {0.8,0.8,0.8,1.0};
+	GLfloat light_position[]={-3.0,4.0,3.0,0.0};
+
+	lightCount =0 ;
+	lights[lightCount].light = GL_LIGHT0;
+	lights[lightCount].isEnabled = true;
+	lightCount++;
+	
 	glLightfv(GL_LIGHT0,GL_POSITION,light_position);
 	glLightfv(GL_LIGHT0,GL_DIFFUSE,light_intensity);
+	glLightfv(GL_LIGHT0,GL_SPECULAR,light_intensity);
+	
+	lights[lightCount].light = GL_LIGHT1;
+	lights[lightCount].isEnabled = true;
+	lightCount++;
+	
+	light_position[0] = 3;
+	glLightfv(GL_LIGHT1,GL_POSITION,light_position);
+	glLightfv(GL_LIGHT1,GL_DIFFUSE,light_intensity);
+	glLightfv(GL_LIGHT1,GL_SPECULAR,light_intensity);
+	
+	lights[lightCount].light = GL_LIGHT2;
+	lights[lightCount].isEnabled = false;
+	lightCount++;
+	
+	light_position[1] = -1;
+	glLightfv(GL_LIGHT2,GL_POSITION,light_position);
+	glLightfv(GL_LIGHT2,GL_DIFFUSE,light_intensity);
+	glLightfv(GL_LIGHT2,GL_SPECULAR,light_intensity);
+	
+	lights[lightCount].light = GL_LIGHT3;
+	lights[lightCount].isEnabled = false;
+	lightCount++;
+	
+	light_position[0] = -3;
+	glLightfv(GL_LIGHT3,GL_POSITION,light_position);
+	glLightfv(GL_LIGHT3,GL_DIFFUSE,light_intensity);
+	glLightfv(GL_LIGHT3,GL_SPECULAR,light_intensity);
 	
 	//menu
+	int light = glutCreateMenu(enableLight);
+	glutAddMenuEntry("LIGHT 0",0);
+	glutAddMenuEntry("LIGHT 1",1);
+	glutAddMenuEntry("LIGHT 2",2);
+	glutAddMenuEntry("LIGHT 3",3);
+	
 	int animate = glutCreateMenu(customerAnimateFunc);
-	glutAddMenuEntry("Rotate",1);
-	glutAddMenuEntry("Wheel",2);
-	glutAddMenuEntry("Stop",3);
+	glutAddMenuEntry(" Rotate ",1);
+	glutAddMenuEntry(" Stop ",2);
 	int main = glutCreateMenu(customerMenuFunc);
 	
-	//glutCreateMenu(menufunc);
-	glutAddMenuEntry("Next",1);
-	glutAddMenuEntry("Previous",2);
-	//glutAddMenuEntry("Animate",3);
-	glutAddSubMenu("Animate",animate);
-	glutAddMenuEntry("Back",4);
+	glutAddMenuEntry(" Next ",1);
+	glutAddMenuEntry(" Previous ",2);
+	glutAddSubMenu(" Animate ",animate);
+	glutAddSubMenu(" Light " ,light);
+	glutAddMenuEntry(" Back ",3);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 	
 	
-
 	glutMouseFunc(mouseCustomer);
 	glutMotionFunc(customerMotionFunc);
 	glutKeyboardFunc(NULL);

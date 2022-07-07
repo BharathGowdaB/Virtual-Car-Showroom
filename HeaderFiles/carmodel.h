@@ -30,11 +30,10 @@ static Material *material;
 static Object *object;
 static int mCount = 0,oCount = 0,aCount = 0;
 
+
+
+
 void drawModel(){
-	//printf("Model called\n");
-	//glLightfv(GL_LIGHT0,GL_POSITION,light_position);
-	//glLightfv(GL_LIGHT0,GL_DIFFUSE,light_intensity);
-	int co = 0;
 	for(int i = 1 ; i <= oCount ; i++){
 		for(int m = 1 ; m <= object[i].matexCordCount ; m++)
 		{
@@ -50,25 +49,20 @@ void drawModel(){
 			
 					for(int j = 1 ; j <= face[f][0][0] ; j++)
 					{
-					//glTexCoord2fv(texCord[face[i][j][1]]);
 							glVertex3fv(vertex[face[f][j][0]]);
 					}
 				glEnd();
 			}
-			co += object[i].mat[m].fend - object[i].mat[m].fstart+1;
 	
 		}
 	
-	}
-	//glutPostRedisplay();
+	}	
 }
 
+
 void parseMaterial(const char filename[]){
-	//printf("parse material called");
 	FILE *fp = fopen(filename,"r");
-	//if(!fp) return;
 	char buf[1024];
-	
 	mCount  = 0;
 	
 	while(fscanf(fp,"%s",buf) != EOF){
@@ -99,7 +93,6 @@ void parseObject(const char filename[]){
 	char buf[1024];
 	
 	FILE *fp = fopen(filename,"r");
-	//if(!fp) return;
 	fCount = vCount = nCount = texCordCount =  oCount = aCount = 0;
 	free(object);
 
@@ -146,7 +139,6 @@ void parseObject(const char filename[]){
 		case 'o' : if(buf[1] == '\0'){
 				oCount++;
 				object[oCount-1].mat[object[oCount-1].matexCordCount].fend = fCount;
-				//printf("%d\n",object[oCount-1].mat[object[oCount-1].matexCordCount].fend);
 				fscanf(fp,"%s\n",object[oCount].name);
 				object[oCount].matexCordCount = 0;
 			}
@@ -170,11 +162,11 @@ void parseObject(const char filename[]){
 	}
 	object[oCount].mat[object[oCount].matexCordCount].fend = fCount;
 	fclose(fp);
-
-	// //printf("v[1] = %f\n",normal[face[5][2][2]][1]);
+/*
 	printf("Number of vertices = %d" ,vCount);
 	printf("\nNumber of Object = %d\n",oCount);
 	printf("\nNumber of faces = %d\n",fCount);
 	printf("\nNumber of normals = %d\n",nCount);
 	printf("\nNumber of texCord = %d\n",texCordCount);
+*/
 }

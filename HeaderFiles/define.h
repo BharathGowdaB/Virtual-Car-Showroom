@@ -13,3 +13,4 @@
 #define FILE_CUSTOMER_INFO "./docs/customerDetail.txt"
 #define FILE_CAR_LIST "./docs/carlist.txt"
 
+#define CAR_SPEC_LEN 1072

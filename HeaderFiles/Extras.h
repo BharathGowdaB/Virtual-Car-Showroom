@@ -127,32 +127,27 @@ class carDetail {
 	public :
 		char model[20],brand[40];
 		char price[30];
-		char engineSpec[40];
-		char fuelType[10];
-		float mileage ;
-		short autoGear;
+		char displacement[40],power[20],torque[20];
+		char fuelType[10],fuelCapacity[15];
+		char mileage[15] ;
+		char transmissionType[10];
+		char topSpeed[15];
 		int safetyRate;
 		
 		void getData(const char filename[]){
 			FILE *fp = fopen(filename,"r");
 			
-			fscanf(fp,"MODEL:%[^\n]\nBRAND:%[^\n]\nPRICE:%[^\n]\nENGINE:%[^\n]\nFUEL:%s\nMILEAGE:%f\nAUTOGEAR:%hx\nRATE:%d\n",model,brand,price,engineSpec,fuelType,&mileage,&autoGear,&safetyRate);
-			printf("safety %d\n",safetyRate);
+			fscanf(fp,"MODEL:%[^\n]\nBRAND:%[^\n]\nPRICE:%[^\n]\nDISPLACEMENT:%[^\n]\nPOWER:%[^\n]\nTORQUE:%[^\n]\nFUEL-TYPE:%[^\n]\nFUEL-CAPACITY:%[^\n]\nMILEAGE:%[^\n]\nTRANSMISSION-TYPE:%[^\n]\nTOP-SPEED:%[^\n]\nSAFETY-RATE:%d\n",model,brand,price,displacement,power,torque,fuelType,fuelCapacity,mileage,transmissionType,topSpeed,&safetyRate);
 			fclose(fp);
 		}
 		
 		float draw(int x,int y,float ratio,int initPadx=0,int initPady=0){
 			int curHei = 0;
 			Text drawer;
-			const char *p[14] = { "Model : ",model,"Brand : ",brand,"Price : ",price,"Engine : ",engineSpec,"Gear Type : "};
+			const char *p[24] = { "Model : ",model,"Brand : ",brand,"Price : ",price,"Displacement : ",displacement,"Max Power : ",power,"Max Torque : ",torque,"Fuel Type : ",fuelType,"Fuel Tank Capacity : ",fuelCapacity,"Mileage : ",mileage,"Transmission Type : ",transmissionType,"Top Speed : ",topSpeed };
 			
-			p[9] = autoGear ? "Auto" : "Manual";
-			p[10] = "Mileage : ";
-			char temp[18];  //has to change
-			sprintf(temp,"%.2f kmpl",mileage);
-			p[11] = temp;	
-			p[12] = "Rating : ";
-			p[13] = "";
+			p[22] = "Safety Rate : ";
+			p[23] = "";
 			
 			int padx = 5,pady = 2;
 			
@@ -163,7 +158,7 @@ class carDetail {
 			drawer.borderType = NO_BORDER;
 			drawer.setPadding(10,10);
 			
-			for(int i= 0 ;i< 14 ;i += 2) {
+			for(int i= 0 ;i < 24 ;i += 2) {
 				drawer.width = x;
 				drawer.setValue(p[i]);
 				drawer.setColor(0,0,0);
