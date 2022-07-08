@@ -116,7 +116,6 @@ void adminDisplay(){
 		}
 		else{
 			odd= true;
-			
 			text[0].setBackground(COLOR_LIGHT_GREY);
 			text[1].setBackground(COLOR_LIGHT_GREY);
 			text[2].setBackground(COLOR_LIGHT_GREY);
@@ -131,7 +130,6 @@ void adminDisplay(){
 	
 	scrollY.draw();
 	glPopMatrix();
-	
 	glutSwapBuffers();
 }
 
@@ -205,8 +203,6 @@ void adminReshape(int w,int h){
 
 
 void loadData(){
-	
-	
 	FILE *fp = fopen(FILE_CUSTOMER_INFO,"r+");
 	head.next = &node[0];
 	node[0].previous = &head;

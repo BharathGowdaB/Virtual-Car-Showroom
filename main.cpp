@@ -6,41 +6,15 @@
 #include "./HeaderFiles/main.h"
 #include "./HeaderFiles/customer.h"
 #include "./HeaderFiles/admin.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "./HeaderFiles/stb_image.h"
 
-static unsigned int textureNames[5];
-typedef GLfloat point[3];
 
-void drawPolygon(point a, point b, point c, point d)
-{
-   
-     glDisable(GL_COLOR_MATERIAL);
-     //glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-     glEnable(GL_TEXTURE_2D);
-
-    glBindTexture(GL_TEXTURE_2D, textureNames[0]);
-    
-    glBegin(GL_QUADS);
-   
-    glTexCoord2f(0.0, 1.0);
-    glVertex3fv(a);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3fv(b);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3fv(c); //left
-    glTexCoord2f(0.0, 0.0);
-    glVertex3fv(d);
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-    //glEnable(GL_COLOR_MATERIAL);
-}
-
+//Initial Display Function
 void startDisplay(){
+
+	glClearColor(1.0,1.0, 1, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
-	glClearColor(0.0,0.0, 0, 0.0);
 	
 	GLfloat sides[4][4]={{0,0,1},{1,0,1},{1,1,1},{0,1,1}};
 	drawPolygon(sides[0],sides[1],sides[2],sides[3]);
@@ -49,45 +23,12 @@ void startDisplay(){
 	glFlush();
 	
 }
-void initTexture()
-{
-    
-    int width, height, nrChannels;
-    unsigned char *image_data;
 
-    glGenTextures(1, textureNames);
-
-   
-        image_data = stbi_load("./docs/mainScreen.jpeg", &width, &height, &nrChannels, 0);
-
-        glBindTexture(GL_TEXTURE_2D, textureNames[0]);
-
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_data);
-        stbi_image_free(image_data);
-
+void startMenu(int key,int state,int x,int y){
+	if(key == GLUT_LEFT_BUTTON){
+		menuInit();
+	}
 }
-void menuDisplay(){
-	glClearColor(1,1,1,1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glPushMatrix();
-		glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-			glViewport(0, 0, winWidth * 2, winHeight * 2);
-			glOrtho(-winWidth,winWidth,-winHeight,winHeight,-10,10);
-		
-		glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-			renderAllText();
-	glPopMatrix();	
-	
-	glutSwapBuffers();
-}
-
 
 void startReshape(int w,int h){
 	glViewport(0, 0, w, h);
@@ -99,41 +40,12 @@ void startReshape(int w,int h){
  	winHeight = h/2;
 	winWidth = w/2;
 }
-void menuReshape(int w,int h){
-	done = 0;
-	winHeight = h/2;
-	winWidth = w/2;
-}
 
-void startMenu(int key,int state,int x,int y){
-	if(key == GLUT_LEFT_BUTTON){
-		menuInit();
-	}
-}
-
-void menuMouse(int key,int state,int x,int y){
-	x -= winWidth;
-	y -= winHeight;
-	y *= -1;
-	printf("%d,%d\n",x,y);
-	if(key == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-		button[0].onClick(x,y);
-		button[1].onClick(x,y);
-		if(button[2].onClick(x,y)){
-			exit(0);
-		}
-		editText[0].onSelect(x,y,func);
-	}
-}
-
-void Exit(){
-	exit(0);
-}
 
 void startInit(){
 	glViewport(0,0,winWidth * 2,winHeight * 2);
 		glMatrixMode(GL_PROJECTION);
-			glOrtho(0,1,0,1,-10,10);
+			gluOrtho2D(0,1,0,1);
 		glMatrixMode(GL_MODELVIEW);
 		
 	bCount = eCount = tCount =0;
@@ -181,7 +93,7 @@ void startInit(){
 	tCount++;
 	*/
 	
-	initTexture();
+	initTexture("./docs/mainFinal.jpeg");
 	
 	glViewport(0, 0, winWidth, winHeight);
  	glMatrixMode(GL_PROJECTION);
@@ -193,10 +105,51 @@ void startInit(){
 	glutDisplayFunc(startDisplay);
 	glutReshapeFunc(startReshape);
 	glutMouseFunc(startMenu);
-	glutPostRedisplay();
-	
-	
+	glutPostRedisplay();	
 }
+
+
+//Menu Display Function
+void menuDisplay(){
+	glClearColor(1,1,1,1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glPushMatrix();
+		glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glViewport(0, 0, winWidth * 2, winHeight * 2);
+			glOrtho(-winWidth,winWidth,-winHeight,winHeight,-10,10);
+		
+		glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+			renderAllText();
+	glPopMatrix();	
+	glutSwapBuffers();
+}
+
+
+void menuReshape(int w,int h){
+	done = 0;
+	winHeight = h/2;
+	winWidth = w/2;
+}
+
+
+void menuMouse(int key,int state,int x,int y){
+	x -= winWidth;
+	y -= winHeight;
+	y *= -1;
+	printf("%d,%d\n",x,y);
+	if(key == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
+		button[0].onClick(x,y);
+		button[1].onClick(x,y);
+		if(button[2].onClick(x,y)){
+			exit(0);
+		}
+		editText[0].onSelect(x,y,func);
+	}
+}
+
+
 void menuInit(){
 	
 	glViewport(0,0,winWidth * 2,winHeight * 2);
@@ -215,7 +168,7 @@ void menuInit(){
 	button[0].setOnClick(renderCustomer);
 	bCount++;
 	
-	button[1].init(-70,100,"Administer",140);
+	button[1].init(-70,100,"Admin",140);
 	button[1].setPadding(10,10);
 	button[1].setColor(1,1,1);
 	button[1].setTextStyle(GLUT_BITMAP_HELVETICA_18,18);
@@ -228,10 +181,9 @@ void menuInit(){
 	button[2].setColor(1,1,1);
 	button[2].setTextStyle(GLUT_BITMAP_HELVETICA_18,18);
 	button[2].setBackground(0.2,0.2,0.8);
-	//button[2].setOnClick(Exit);
 	bCount++;
 	
-	text[0].init(-200,170,"3D SHOWROOM",400);
+	text[0].init(-200,170,"3D CAR SHOWROOM",400);
 	text[0].textAlign = TEXT_CENTER;
 	text[0].borderType = NO_BORDER;
 	text[0].setTextStyle(GLUT_BITMAP_TIMES_ROMAN_24,24);
@@ -243,6 +195,8 @@ void menuInit(){
 	glutMouseFunc(menuMouse);
 	glutPostRedisplay();
 }
+
+
 int main(int argc,char **argv)
 {
 	glutInit(&argc,argv);
@@ -259,9 +213,6 @@ int main(int argc,char **argv)
 		carCount += 2;
 	fclose(fp);
 	currentCarIndex = 0;
-	
-	//printf("%s ,%s \n",carlist[0],carlist[2]);
-	
 	
 	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();

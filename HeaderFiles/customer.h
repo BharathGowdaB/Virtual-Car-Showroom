@@ -6,14 +6,14 @@ void customerMotionFunc(int,int);
 static void (*func)() = customerUserContact;
 static scrollBarX userScr;
 static scrollBarY carScrY;
-static bool userScroll =false ,carScrollY = false,grabCar = false ,zoomCar = false;
+static bool userScroll =false ,carScrollY = false,grabCar = false ,zoomCar = false,negativeRotate= false;
 static int oldX,oldY;
-static float modelTranslateY = -2,modelTranslateX = 0, zoom = 1.5;
+static float modelTranslateY = -2.3,modelTranslateX = 0, zoom = 1.4;
 
 static char carlist[10][150];
 static int carCount = 0,currentCarIndex = 0;
 static float theta = 0, wheelTheta = 0.0;
-
+static int curBackground = -1,maxBackground = 1;
 
 class lightObject{
 	public : GLenum light;
@@ -39,24 +39,66 @@ void customerCarModel(){
 			glLoadIdentity();
 			glViewport(viewport[2].x0,viewport[2].y0,viewport[2].x1,viewport[2].y1);
 			if(viewport[2].x1 > viewport[2].y1)
-				glOrtho(-3.0 * (GLfloat)viewport[2].x1/(GLfloat)viewport[2].y1 ,3.0 * (GLfloat)viewport[2].x1/(GLfloat)viewport[2].y1 ,-3,3,-10,10);
+				glOrtho(-3.0 * (GLfloat)viewport[2].x1/(GLfloat)viewport[2].y1 ,3.0 * (GLfloat)viewport[2].x1/(GLfloat)viewport[2].y1 ,-3,3,-12,12);
 			else 
-				glOrtho(-3,3,-3.0 * (GLfloat)viewport[2].y1/(GLfloat)viewport[2].x1 , 3.0 * (GLfloat)viewport[2].y1/ (GLfloat) viewport[2].x1  ,-10,10);
+				glOrtho(-3,3,-3.0 * (GLfloat)viewport[2].y1/(GLfloat)viewport[2].x1 , 3.0 * (GLfloat)viewport[2].y1/ (GLfloat) viewport[2].x1  ,-12,12);
 		glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
-			gluLookAt(2.0,0.70,2.0,0.0,0.2,0.2,0.0,1.0,0.0);
-			text[8].init(20,-50,curCar.brand);
-			text[8].setColor(1,1,1);
+			char temp[150] ;
+			strcpy(temp,curCar.brand);
+			strcat(temp, " ");
+			strcat(temp,curCar.model);
+			text[8].init(-4.6,2.8,temp);
+			text[8].setTextStyle(GLUT_BITMAP_TIMES_ROMAN_24,24);
+			text[8].setColor(0,0,0);
+			text[8].borderType = NO_BORDER;
 			text[8].drawText();
+			
+			gluLookAt(2.0,0.70,2.0,0.0,0.2,0.2,0.0,1.0,0.0);
+			/*if(curBackground == -2){
+			glColor3f(1.0,1.0,1.0);
+				glPushMatrix();
+				//glScalef(2,2,2);
+				drawTexCube(3);
+				glPopMatrix();
+			}
+			else */if(curBackground >= 0){
+			glPushMatrix();
+				glColor3f(1.0,1.0,1.0);
+				GLfloat side[4][3] = {{ -12,-4,8},{8,-4,-12},{8,3,-12},{-12,5,8}};
+				drawPolygon(side[0],side[1],side[2],side[3],curBackground);
+			glPopMatrix();
+			}
+			else{
+			glPushMatrix();
+				glColor3f(0,153/255.0,0);
+				glTranslatef(0,-2.6,0);
+				glScalef(16,0.1,16);
+				glutSolidCube(1);
+			glPopMatrix();
+			
+		
+			glPushMatrix();
+				glColor3f(26/255.0, 179/255.0, 255/255.0);
+				
+				glTranslatef(0,0,-4.6);
+				glScalef(20,8,0.1);
+				glutSolidCube(1);
+				
+			glPopMatrix();
+			
+			glPushMatrix();
+				glColor3f(51/255.0, 204/255.0, 255/255.0);
+				glTranslatef(-5,0,0);
+				glScalef(0.1,8,20);
+				glutSolidCube(1);
+			glPopMatrix();
+			}
 			glEnable(GL_LIGHTING);
 			for(int i = 0 ; i < lightCount ; i++)
 				if(lights[i].isEnabled)
 					glEnable(lights[i].light);
-			glPushMatrix();
-				glTranslatef(0,-2,0);
-				glScalef(8,0.1,8);
-				glutSolidCube(1);
-			glPopMatrix();
+			
 			glTranslatef(0, modelTranslateY,0);
 			glScalef(zoom,zoom,zoom);
 			glRotatef(theta,0,1,0);
@@ -124,7 +166,7 @@ void customerCarSpec(){
 			text[10].drawBox();
 			text[9].drawBox();
 			carScrY.draw();
-			curCar.draw(viewport[1].x1,viewport[1].y1,(viewport[1].x1)/(350),10,-10);
+			curCar.draw(viewport[1].x1,viewport[1].y1,1,10,-10);
 			
 	glPopMatrix();
 	glutSwapBuffers();
@@ -171,8 +213,8 @@ void customerMotionFunc(int x,int y){
 		modelTranslateY -= (6.0 * viewport[2].aspecty/(float)viewport[2].y1) * (y - oldY);
 		modelTranslateX += (6.0 * viewport[2].aspectx/(float)viewport[2].x1) * (x - oldX);
 		oldY = y; oldX = x;
-		if(modelTranslateY < -2)
-			modelTranslateY = -2;
+		if(modelTranslateY < -2.5)
+			modelTranslateY = -2.5;
 		else if(modelTranslateY > 1.5)
 			modelTranslateY = 1.5;
 		glutPostRedisplay();
@@ -220,8 +262,14 @@ void customerFormSubmit(){
 }
 
 void idle(){
-	theta += 0.35;
-	theta = theta > 360.0 ? theta -360.0 : theta;
+	if(negativeRotate){
+		theta -= 0.42;
+		theta = theta < 0.0 ? 359.0 : theta;
+	}
+	else{
+		theta += 0.42;
+		theta = theta > 360.0 ? theta - 360.0 : theta;
+	}
 	
 	customerCarModel();
 }
@@ -246,8 +294,11 @@ void customerMenuFunc(int n){
 				glutPostRedisplay();
 			break;
 		
-
-		case 3 : menuInit();
+		case 3 : 	curBackground++;
+				if(curBackground >= maxBackground) curBackground = -1;
+				glutPostRedisplay();
+				break;
+		case 4 : menuInit();
 			glutIdleFunc(NULL);
 			glutPostRedisplay();
 			break;
@@ -257,9 +308,13 @@ void customerMenuFunc(int n){
 void customerAnimateFunc(int n){
 	
 	switch(n){
-		case 1 : glutIdleFunc(idle);
+		case 1 : 	negativeRotate = false;
+				glutIdleFunc(idle);
 				break;
-		case 2 : glutIdleFunc(NULL);
+		case 2 : 	negativeRotate = true;
+				glutIdleFunc(idle);
+				break;
+		case 3 : glutIdleFunc(NULL);
 				break;
 	}
 }
@@ -291,12 +346,12 @@ void initCustomer(int x,int y){
 	}
 	
 	//car-detail-viewport
-	xt = 350;
+	xt = 400 > winWidth * 0.5 ? 400 : winWidth * 0.5;
 	yt = winHeight*2.0 - viewport[0].y1;
 	setViewport(&viewport[1],0,viewport[0].y1,xt,yt,0,xt,-yt,0);	
 	
 	if(CAR_SPEC_LEN  > viewport[1].y1){
-		carScrY.init(&viewport[1],-CAR_SPEC_LEN,340,-30,20);
+		carScrY.init(&viewport[1],-CAR_SPEC_LEN,xt-10,-30,20);
 	}
 	else{
 		carScrY.isEnabled = false;
@@ -304,7 +359,7 @@ void initCustomer(int x,int y){
 	}
 	
 	//car-view-viewport
-	xt = winWidth * 2.0 - 350;
+	xt = winWidth * 2.0 - xt;
 	yt = winHeight * 2.0 - viewport[0].y1;
 	setViewport(&viewport[2],viewport[1].x1,viewport[0].y1,xt,yt,0,xt,-yt,0,-10,10);
 	
@@ -387,7 +442,12 @@ void enableLight(int n)
 
 
 void renderCustomer(){
-	
+	initTexture("./docs/index2.jpg");
+	initTexture("./docs/index3.jpg",1);
+	maxBackground++;
+	//initTexture("index4.jpg",2);
+	//maxBackground++;
+	//initTexture("3DCube.jpg",3);
 	glClearColor(1,1,1,1);
 {
 	eCount = tCount = bCount =0;
@@ -533,15 +593,17 @@ void renderCustomer(){
 	glutAddMenuEntry("LIGHT 3",3);
 	
 	int animate = glutCreateMenu(customerAnimateFunc);
-	glutAddMenuEntry(" Rotate ",1);
-	glutAddMenuEntry(" Stop ",2);
+	glutAddMenuEntry(" Rotate AntiClockWise ",1);
+	glutAddMenuEntry(" Rotate ClockWise " ,2);
+	glutAddMenuEntry(" Stop Rotation ",3);
 	int main = glutCreateMenu(customerMenuFunc);
 	
 	glutAddMenuEntry(" Next ",1);
 	glutAddMenuEntry(" Previous ",2);
+	glutAddMenuEntry(" Next BackGround ",3);
 	glutAddSubMenu(" Animate ",animate);
 	glutAddSubMenu(" Light " ,light);
-	glutAddMenuEntry(" Back ",3);
+	glutAddMenuEntry(" Back ",4);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 	
 	
