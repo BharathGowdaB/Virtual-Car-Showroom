@@ -220,7 +220,7 @@ void customerMotionFunc(int x,int y){
 		glutPostRedisplay();
 	}
 	if(zoomCar){
-		printf("new zoom = %f \n", zoom + (oldY - y) * 0.001);
+		////printfnew zoom = %f \n", zoom + (oldY - y) * 0.001);
 		zoom += (oldY-y) * 0.1;
 		if(zoom < 0.8)
 			zoom = 0.8;
@@ -278,6 +278,10 @@ void customerMenuFunc(int n){
 	
 	switch(n){
 		case 1 :	currentCarIndex+=2;
+				button[0].setValue("Submit");
+				button[0].setColor(1,1,1);
+				button[0].setBackground(COLOR_BLUE_BUTTON);
+				button[0].isEnabled = true;
 				if(currentCarIndex >= carCount) currentCarIndex -= carCount;
 				curCar.getData(carlist[currentCarIndex ]);
 				parseMaterial(carlist[(currentCarIndex)+1]);
@@ -286,8 +290,12 @@ void customerMenuFunc(int n){
 			break;
 
 		case 2 :	currentCarIndex -= 2;
+				button[0].setValue("Submite");
+				button[0].setColor(1,1,1);
+				button[0].setBackground(COLOR_BLUE_BUTTON);
+				button[0].isEnabled = true;
 				if(currentCarIndex < 0) currentCarIndex += carCount;
-				printf(" Car Count = %d , index %d\n" ,carCount,currentCarIndex);
+				////printf Car Count = %d , index %d\n" ,carCount,currentCarIndex);
 				curCar.getData(carlist[currentCarIndex]);
 				parseMaterial(carlist[(currentCarIndex)+1]);
 				parseObject(carlist[(currentCarIndex)]);
@@ -495,7 +503,7 @@ void renderCustomer(){
 	
 	tempPosX += editText[2].width;
 	
-	printf("x = %f\n",tempPosX);
+	//printfx = %f\n",tempPosX);
 	
 	button[0].init(0,0,"Submit",100,30);
 	button[0].setPadding(5,8);
@@ -535,7 +543,7 @@ void renderCustomer(){
 	
 }
 	//set current car
-	printf("carcount = %d",carCount);
+	//printfcarcount = %d",carCount);
 	currentCarIndex = 0;
 	curCar.getData(carlist[currentCarIndex]);
 	

@@ -287,7 +287,7 @@ class EditText : public Text{
 				}
 			}
 			else if(key == 13){ //enter
-				curEditText->setBorderColor(1,1,1);
+				curEditText->setBorderColor(0,0,0);
 				glutKeyboardFunc(NULL);
 			}
 			else if(curEditText->chCount < MAX_CHARACTERS){

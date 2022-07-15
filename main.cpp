@@ -45,8 +45,10 @@ void startReshape(int w,int h){
 void startInit(){
 	glViewport(0,0,winWidth * 2,winHeight * 2);
 		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
 			gluOrtho2D(0,1,0,1);
 		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 		
 	bCount = eCount = tCount =0;
 	/*
@@ -94,14 +96,14 @@ void startInit(){
 	*/
 	
 	initTexture("./docs/mainFinal.jpeg");
-	
+	/*
 	glViewport(0, 0, winWidth, winHeight);
  	glMatrixMode(GL_PROJECTION);
  	glLoadIdentity();
 	gluOrtho2D(0,  winWidth, 0, winHeight);
  	glMatrixMode(GL_MODELVIEW);
  	glLoadIdentity();
-	
+	*/
 	glutDisplayFunc(startDisplay);
 	glutReshapeFunc(startReshape);
 	glutMouseFunc(startMenu);
@@ -204,7 +206,7 @@ int main(int argc,char **argv)
 	glutInitWindowSize(1280,720);
 	winWidth = 640;
 	winHeight = 360;
-	mainWin = glutCreateWindow("MENU");
+	mainWin = glutCreateWindow("3D CAR SHOWROOM");
 	
 	startInit();
 	
